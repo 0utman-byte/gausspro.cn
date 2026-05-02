@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<!-- saved from url=(0077)file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高斯智算 - 官网</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft YaHei", sans-serif;}
+        .container {width: 1400px; margin: 60px auto;}
+        /* 导航栏样式（修改背景色为#0B162A，内边距左右各增加5px，总计加宽10px） */
+        .nav {
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 垂直居中 */
+            gap: 40px;
+            padding: 15px 25px; /* 原20px → 25px，左右各加5px，总计加宽10px */
+            background: #0B162A; /* 修改后的导航栏背景色 */
+            position: fixed; /* 核心：固定定位 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9999; /* 确保在最上层 */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        /* Logo样式 */
+        .nav-logo {
+            position: absolute;
+            left: 25px; /* 同步增加5px，保持和导航栏内边距一致 */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .nav-logo img {
+            height: 40px; /* Logo高度 */
+            width: auto; /* 宽度自适应 */
+        }
+        /* 导航链接样式 */
+        .nav a {
+            text-decoration: none; 
+            color: #ffffff; /* 文字保持白色 */
+            font-size: 16px; 
+            font-weight: 500; 
+            cursor: pointer;
+            padding: 8px 0;
+        }
+        .nav a.active {color: #40a9ff; font-weight: bold;} /* 激活状态浅蓝色 */
+        .lang-switch {position: absolute; right: 25px; /* 同步增加5px，保持和导航栏内边距一致 */ top: 50%; transform: translateY(-50%); display: flex; gap: 10px;}
+        .lang-btn {padding: 6px 12px; border: 1px solid #40a9ff; background: #0B162A; /* 语言按钮背景同步修改 */ color: #40a9ff; border-radius: 4px; cursor: pointer;}
+        .lang-btn.active {background: #40a9ff; color: #ffffff;}
+        .banner {position: relative; width: 100%; height: 750px; overflow: hidden;}
+        .banner img {width: 100%; height: 100%; object-fit: cover;}
+        .banner .slogan {position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+                          color: #fff; font-size: 60px; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(0,0,0,0.5);}
+        .sub-title {position: absolute; top:70%; left:50%; transform:translate(-50%,-50%);
+                    text-align: center; font-size:24px; color:#fff; max-width:900px; text-shadow: 0 0 8px rgba(0,0,0,0.5);}
+        /* 给页面主体增加顶部内边距，防止被固定导航遮挡 */
+        .section {padding: 80px 0 60px;}
+        .case-item {display: flex; align-items: center; gap: 40px; margin-bottom: 60px;}
+        .case-item img {width: 450px;height:360px； border-radius: 8px;}
+        .case-text {flex: 1;}
+        .case-text h3 {font-size: 24px; margin-bottom: 15px;}
+        .case-text p {line-height: 1.8; color: #333;}
+        img.error-img {
+            background: #f5f7fa;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+        .title {font-size: 32px; text-align: center; margin-bottom: 40px; color: #111;}
+        .grid {display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;}
+        .card {width: 48%; text-align: center; padding: 20px;}
+        .card img {width: 500px; height: 360px; margin-bottom: 15px;}
+        .card h3 {font-size: 20px; margin-bottom: 10px;}
+        .card p {color: #666; line-height: 1.6;}
+        .btn {display: inline-block; padding: 10px 24px; background: #0052cc; color: #fff;
+              text-decoration: none; border-radius: 4px; margin-top: 15px; border: none; cursor: pointer;}
+        .data-box {display: flex; justify-content: center; gap: 100px; margin: 50px 0; font-size: 25px;}
+        .data-box span {color: #0052cc; font-weight: bold; font-size: 30px;}
+        .value {display: flex; justify-content: center; gap: 40px; font-size: 20px; font-weight: bold; color: #333; margin: 40px 0;}
+        .detail {display: none; margin-top: 15px; line-height: 1.8; color: #555;}
+        .detail.show {display: block;}
+        .highlight {color: #0052cc; font-weight: bold; font-size: 18px;}
+        .footer-job {background: #f5f7fa; padding: 60px 0; text-align: center;}
+        .job-btn {display: inline-block; margin: 0 10px ; padding: 12px 30px; background: #0052cc; color: #fff; text-decoration: none; border-radius: 4px;}
+        .page {display: none;}
+        .page.active {display: block;}
+        #home .banner {height: 750px;}
+        #home .banner .slogan {font-size: 60px;} /* 原始42px + 20px = 62px */
+        [data-lang] {display: none;}
+        [data-lang].show {display: block;}
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 + 语言切换 + Logo（替换为新Logo） -->
+<div class="nav">
+    <!-- 左上角Logo（替换为新图片链接） -->
+    <div class="nav-logo">
+        <img src="./images/1a5418532b5c47a2aa989fa908ebabbd.png~tplv-a9rns2rl98-24_720_720.png" alt="高斯智算logo" onerror="this.style.display=&#39;none&#39;">
+    </div>
+    
+    <a onclick="showPage(&#39;home&#39;)" class="active">
+        <span data-lang="zh" class="show">首页</span>
+        <span data-lang="en">Home</span>
+    </a>
+    <a onclick="showPage(&#39;business&#39;)" class="">
+        <span data-lang="zh" class="show">核心业务</span>
+        <span data-lang="en">Business</span>
+    </a>
+    <a onclick="showPage(&#39;solution&#39;)" class="">
+        <span data-lang="zh" class="show">解决方案</span>
+        <span data-lang="en">Solutions</span>
+    </a>
+    <a onclick="showPage(&#39;case&#39;)" class="">
+        <span data-lang="zh" class="show">典型案例</span>
+        <span data-lang="en">Cases</span>
+    </a>
+    <a onclick="showPage(&#39;about&#39;)" class="">
+        <span data-lang="zh" class="show">关于我们</span>
+        <span data-lang="en">About</span>
+    </a>
+    <a onclick="showPage(&#39;job&#39;)" class="">
+        <span data-lang="zh" class="show">广纳贤才</span>
+        <span data-lang="en">Careers</span>
+    </a>
+    
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="switchLang(&#39;zh&#39;)">中文</button>
+        <button class="lang-btn" onclick="switchLang(&#39;en&#39;)">English</button>
+    </div>
+</div>
+
+<!-- 首页 -->
+<div id="home" class="page active">
+    <section class="section">
+        <div class="banner">
+            <!-- 科技感背景图 -->
+            <img src="./images/380b86471401411d84dc4ea9481cd5a0.png~tplv-a9rns2rl98-24_720_720.png" alt="高斯智算-深耕智算基础设施" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">深耕智算基础设施，赋能全域AI产业发展</span>
+                <span data-lang="en">Deepen Intelligent Computing Infrastructure, Empower Global AI Industry</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="title">
+                <span data-lang="zh" class="show">公司简介</span>
+                <span data-lang="en">Company Profile</span>
+            </div>
+            <p style="text-align:center; line-height:2.8; font-size:20px; color:#333;">
+                <span data-lang="zh" class="show">重庆高斯智算科技有限公司（以下简称 “高斯智算”），深耕智能计算核心领域。公司紧抓人工智能产业发展浪潮，专注筑牢算力基础设施底座，推动 AI 能力规模化普惠与产业化落地。依托资源资本禀赋，兼备技术创新、工程建设与运营管理全栈能力，聚焦智算产业，全面赋能智能技术创新应用与产业升级。</span>
+                <span data-lang="en">Chongqing Gauss Intelligent Computing Technology Co., Ltd. focuses on intelligent computing. We seize the wave of AI industry, build computing infrastructure, and promote the large-scale popularization of AI capabilities.</span>
+            </p>
+            <div class="data-box">
+                <div>
+                    <span data-lang="zh" class="show">产业投资</span>
+                    <span data-lang="en">Investment</span>
+                    <span>300</span>
+                    <span data-lang="zh" class="show">亿元+</span>
+                    <span data-lang="en">B+</span>
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">落地项目</span>
+                    <span data-lang="en">Projects</span>
+                    <span>20</span>+
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">服务客户</span>
+                    <span data-lang="en">Clients</span>
+                    <span>100</span>+
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">合作伙伴</span>
+                    <span data-lang="en">Partners</span>
+                    <span>200</span>+
+                </div>
+            </div>
+            <div class="title">
+                <span data-lang="zh" class="show">核心业务</span>
+                <span data-lang="en">Core Business</span>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <img src="./images/adc0f54129274b7c85e2b6aa3e818e57.png~tplv-a9rns2rl98-24_720_720.png" alt="AI产业投资" onerror="this.classList.add(&#39;error-img&#39;)">
+                    <h3>
+                        <span data-lang="zh" class="show">AI产业投资</span>
+                        <span data-lang="en">AI Investment</span>
+                    </h3>
+                    <div class="btn" onclick="showPage(&#39;business&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="./images/03abb8427780412fa0cb71b436b425dd.png~tplv-a9rns2rl98-24_720_720.png" alt="高标准基础设施建设" onerror="this.classList.add(&#39;error-img&#39;)">
+                    <h3>
+                        <span data-lang="zh" class="show">高标准基础设施建设</span>
+                        <span data-lang="en">Infrastructure Construction</span>
+                    </h3>
+                    <div class="btn" onclick="showPage(&#39;business&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="./images/1b50906ad8254e389b1ac4b829d43b4d.png~tplv-a9rns2rl98-image.png" alt="全周期运维保障服务" onerror="this.classList.add(&#39;error-img&#39;)">
+                    <h3>
+                        <span data-lang="zh" class="show">全周期运维保障服务</span>
+                        <span data-lang="en">Operation &amp; Maintenance</span>
+                    </h3>
+                    <div class="btn" onclick="showPage(&#39;business&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="./images/1a6d8f681bbd4919a45cff87fc38c943.png~tplv-a9rns2rl98-image.png" alt="集约化算力运营服务" onerror="this.classList.add(&#39;error-img&#39;)">
+                    <h3>
+                        <span data-lang="zh" class="show">集约化算力运营服务</span>
+                        <span data-lang="en">Computing Operation</span>
+                    </h3>
+                    <div class="btn" onclick="showPage(&#39;business&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </div>
+                </div>
+            </div>
+            <div class="title">
+                <span data-lang="zh" class="show">我们的价值观</span>
+                <span data-lang="en">Our Values</span>
+            </div>
+            <div class="value">
+                <div>
+                    <span data-lang="zh" class="show">务实</span>
+                    <span data-lang="en">Pragmatic</span>
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">极致</span>
+                    <span data-lang="en">Extreme</span>
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">共赢</span>
+                    <span data-lang="en">Win-Win</span>
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">创新</span>
+                    <span data-lang="en">Innovation</span>
+                </div>
+            </div>
+        <div class="banner">
+            <!-- 广招贤士背景图 -->
+            <img src="./images/750b40e356994382b809e3e251990bc9.png~tplv-a9rns2rl98-image.png" alt="高斯智算-深耕智算基础设施" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">广纳贤才</span>
+                <span data-lang="en">Join Us</span>
+            </div>
+        </div>
+        <div class="footer-job">
+            <h2 style="font-size:48px; margin-bottom:30px;">
+                <span data-lang="zh" class="show">加入我们</span>
+                <span data-lang="en">Join Us</span>
+            </h2>
+            <p style="font-size:24px; margin-bottom:60px;">
+                <span data-lang="zh" class="show">我们坚信人才是驱动算力建设与智能计算革新的核心力量</span>
+                <span data-lang="en">We firmly believe that talent is the core driving force behind the construction of computing power and the innovation of intelligent computing</span>
+            </p>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">查看社会招聘</span>
+                <span data-lang="en">Recruitment</span>
+            </a>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">查看核心岗位</span>
+                <span data-lang="en">Key Positions</span>
+            </a>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">提交简历</span>
+                <span data-lang="en">Submit Resume</span>
+            </a>
+            <div style="margin-top:40px;">
+                <p>
+                    <span data-lang="zh" class="show">简历投递邮箱：</span>
+                    <span data-lang="en">Email: </span>
+                    <strong>hr@gausspro.cn</strong>
+                </p>
+                <p style="margin-top:10px;">
+                    <span data-lang="zh" class="show">简历如果合适会在5个工作日内进行反馈，感谢投递！</span>
+                    <span data-lang="en">We will reply within 5 working days if qualified, thanks!</span>
+                </p>
+            </div>
+            <div style="margin-top:40px; text-align:left; max-width:800px; margin-left:auto; margin-right:auto;">
+                <h3 style="margin-bottom:20px;">
+                    <span data-lang="zh" class="show">关怀与成长</span>
+                    <span data-lang="en">Benefits &amp; Growth</span>
+                </h3>
+                <p>
+                    <span data-lang="zh" class="show">• 与顶尖算力团队并肩作战</span>
+                    <span data-lang="en">• Work with top computing team</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 清晰的晋升成长路径</span>
+                    <span data-lang="en">• Clear promotion path</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 弹性工作制 + 结果导向</span>
+                    <span data-lang="en">• Flexible working + result-oriented</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 有竞争力的薪酬+奖金</span>
+                    <span data-lang="en">• Competitive salary + bonus</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 全额五险一金 + 商业保险 + 高端体检等</span>
+                    <span data-lang="en">• Full social insurance + commercial insurance + physical examination</span>
+                </p>
+            </div>
+        </div>
+    </div></section>
+</div>
+
+<!-- 核心业务 -->
+<div id="business" class="page">
+    <section class="section" style="background:#f9f9f9;">
+        <div class="banner">
+            <img src="./images/f3ef15e8d8f240fab5605f3970aaa6d7.png~tplv-a9rns2rl98-24_720_720.png" alt="核心业务banner" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">布局算力枢纽，驱动全周期运营</span>
+                <span data-lang="en">Layout Computing Hubs, Drive Full-Cycle Operations</span>
+            </div>
+            <div class="sub-title">
+                <span data-lang="zh" class="show">全国核心枢纽投资布局，推动高性能算力规模化建设落地，并提供全生命周期运维与运营保障</span>
+                <span data-lang="en">National core hub layout, high-performance computing construction, and full life-cycle operation support</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="grid">
+                <div class="card" style="text-align:left;">
+    <!-- 左侧图片 -->
+    <div class="card-img">
+      <img src="./images/c5e7222b9f174ae48dbcb23b9cf4e886.png~tplv-a9rns2rl98-24_720_720.png" alt="AI产业投资" onerror="this.classList.add(&#39;error-img&#39;)">
+    </div>
+                    <h3>
+                        <span data-lang="zh" class="show">AI产业投资</span>
+                        <span data-lang="en">AI Industry Investment</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">• 自有资金投入+多元化融资<br>• 围绕国家算力枢纽布局<br>• 自研算力调度、调优等核心技术</span>
+                        <span data-lang="en">• Self-owned funds + diversified financing<br>• National computing hub layout<br>• Proprietary scheduling &amp; optimization</span>
+                    </p>
+                    <button class="btn" onclick="this.nextElementSibling.classList.toggle(&#39;show&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </button>
+                    <div class="detail">
+                        <span data-lang="zh" class="show">围绕国家“东数西算”战略，在京津冀、长三角、粤港澳大湾区、成渝、内蒙古及新疆等重点区域布局算力基础设施，持续推进高性能算力资源的规模化建设与长期运营，累计投资规模超过300亿元。</span>
+                        <span data-lang="en">Focusing on the national strategy, we layout computing infrastructure in key regions with total investment over 30 billion yuan.</span>
+                        <span data-lang="zh" class="show">联合耶鲁大学、MIT、清华大学等高校及科研机构，持续开展算力调优、网络优化与软硬件适配研究，保障主流模型推理性能保持行业领先水平，自研核心技术已超50项。</span>
+                        <span data-lang="en">Partnering with Yale, MIT, Tsinghua and top research institutions, we optimize computing power, networks and hardware-software adaptation. Boasting 50+ self-developed core technologies, we maintain industry-leading performance in mainstream model inference.</span>
+                    </div>
+                </div>
+                <div class="card" style="text-align:left;">
+    <!-- 左侧图片 -->	
+    <div class="card-img">
+      <img src="./images/1b3d8bd4e53543e2a32732523133dd8f.png~tplv-a9rns2rl98-24_720_720.png" alt="高标准基础设施建设" onerror="this.classList.add(&#39;error-img&#39;)">
+    </div>
+                    <h3>
+                        <span data-lang="zh" class="show">高标准基础设施建设</span>
+                        <span data-lang="en">High-Standard Infrastructure</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">• AIDC全域规划与高等级机房设计建设<br>• 超万卡算力集群规划、建设与调优<br>• 算网一体、跨域算力互通</span>
+                        <span data-lang="en">• AIDC planning &amp; high-level IDC construction<br>• 10K+ card cluster deployment<br>• Computing-network integration</span>
+                    </p>
+                    <button class="btn" onclick="this.nextElementSibling.classList.toggle(&#39;show&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </button>
+                    <div class="detail">
+                        <span data-lang="zh" class="show">聚焦AIDC全域规划、工程建设与整体交付，具备超大规模算力集群建设能力，单体最大算力规模超过2万P，交付周期1-3个月。</span>
+                        <span data-lang="en">We provide full AIDC solutions with large-scale cluster capacity up to 20,000P, delivery in 1-3 months.</span>
+                        <span data-lang="zh" class="show">现已布局全国多个区域，建成 20 余个算力基础设施项目，稳步筑牢全国算力节点支撑体系。</span>
+                        <span data-lang="en">With nationwide layout covering multiple regions, we have completed 20+ computing infrastructure projects to consolidate the national computing node system.</span>
+                    </div>
+                </div>
+                <div class="card" style="text-align:left;">
+    <!-- 左侧图片 -->
+    <div class="card-img">
+      <img src="./images/3ad001dddfb14083a6ac7497dc7f2502.png~tplv-a9rns2rl98-24_720_720.png" alt="全周期运维保障服务" onerror="this.classList.add(&#39;error-img&#39;)">
+    </div>
+                    <h3>
+                        <span data-lang="zh" class="show">全周期运维保障服务</span>
+                        <span data-lang="en">Full-Cycle O&amp;M Services</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">• 7×24小时专业运维与多级协同保障<br>• 自研监控平台，实现智能预警与系统自愈<br>• 充足的备件与维保体系</span>
+                        <span data-lang="en">• 7×24h professional O&amp;M<br>• Self-developed monitoring platform<br>• Sufficient spare parts &amp; maintenance</span>
+                    </p>
+                    <button class="btn" onclick="this.nextElementSibling.classList.toggle(&#39;show&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </button>
+                    <div class="detail">
+                        <span data-lang="zh" class="show">构建算力基础设施全生命周期运维保障体系，依托自研智能运维平台、分级管理机制、100+人专业运维团队，保障设备全年运行稳定率高达 99.9%。</span>
+                        <span data-lang="en">Full-lifecycle O&amp;M system with 100+ professionals, ensuring 99.9% annual stability.</span>
+                    </div>
+                </div>
+                <div class="card" style="text-align:left;">
+    <!-- 左侧图片 -->
+    <div class="card-img">
+         <img src="./images/aa5a1bbf80cb491da8f0f5cfd30665c5.png~tplv-a9rns2rl98-24_720_720.png" alt="集约化算力运营服务" onerror="this.classList.add(&#39;error-img&#39;)">
+    </div>
+                    <h3>
+                        <span data-lang="zh" class="show">集约化算力运营服务</span>
+                        <span data-lang="en">Intensive Computing Operation</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">• 搭建统一资源池，提供智能调度服务<br>• 提供专属算力集群全流程运营服务<br>• 提供不同场景下的定制化算力方案</span>
+                        <span data-lang="en">• Unified resource pool &amp; intelligent scheduling<br>• Dedicated cluster operation<br>• Customized solutions for scenarios</span>
+                    </p>
+                    <button class="btn" onclick="this.nextElementSibling.classList.toggle(&#39;show&#39;)">
+                        <span data-lang="zh" class="show">了解详情</span>
+                        <span data-lang="en">Learn More</span>
+                    </button>
+                    <div class="detail">
+                        <span data-lang="zh" class="show">面向智算基础设施资产，提供商业化运营能力，通过统一调度与资源整合，实现算力的弹性供给与高效使用。</span>
+                        <span data-lang="en">Provide commercial operation for intelligent computing assets, elastic supply and efficient use via unified scheduling.</span>
+                        <span data-lang="zh" class="show">目前运营算力规模超10万P，服务覆盖AI训练、推理及大数据分析等多类应用场景，累计服务100余个行业客户。</span>
+                        <span data-lang="en">Our operational computing power exceeds 100,000 P. We serve over 100 industry clients across AI training, inference and big data analytics scenarios.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 解决方案 -->
+<div id="solution" class="page">
+    <section class="section">
+        <div class="banner">
+            <img src="./images/c76118fb52b84198bd7a73d4e0ee1aa3.png~tplv-a9rns2rl98-24_720_720.png" alt="解决方案banner" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">构筑全域算力底座，赋能产业智能升级</span>
+                <span data-lang="en">Forge Global Computing Foundation, Fuel Industrial Intelligent Evolution</span>
+            </div>
+            <div class="sub-title">
+                <span data-lang="zh" class="show">从极速搭建、训推调优到全周期运维、全域算力运营，以全维度算力方案，为行业创新提供端到端服务</span>
+                <span data-lang="en">Covering rapid deployment, train-inference tuning, full-lifecycle maintenance and global computing operation, we power industrial innovation with all-round end-to-end computing services</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="case-item">
+                <img src="./images/135ed8196b5e4652bf0b7ddc4da0204f.png~tplv-a9rns2rl98-24_720_720.png" alt="极速建设全域算力" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">极速建设全域算力</span>
+                        <span data-lang="en">Rapid Construction of Global Computing Power</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">全域规划：</span>
+                        <span data-lang="en">Global Overall Planning：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">面向各行业客户，贴合业务场景、安全合规及降本目标，定制专业化智算集群建设方案。适配千卡至万卡全梯度算力规模，按需选配多规格风冷、液冷算力设备。灵活搭建扁平化/混合多层组网，支持1:1无损收敛比，标配800G/1.6T高速互联，一站式完成主流网络设备配套落地。适配全品类AI算力负载，统筹并行文件、分布式、对象存储一体化部署，具备高聚合带宽、千万级IOPS、微秒级低时延能力，可支撑EB级海量容量弹性扩容。前置全栈专业规划设计，联动全域建设、全天候运维、全周期运营一体化交付，保障智算集群合规上线、长效稳定运行。</span>
+                        <span data-lang="en">Tailored for all industries, we deliver customized intelligent computing cluster solutions aligned with business scenarios, compliance and cost reduction goals. Supporting scale from thousands to tens of thousands of computing cards, we provide air/liquid cooling equipment options, flexible network architecture with 1:1 lossless convergence and 800G/1.6T high-speed interconnection. We deploy integrated storage with high bandwidth, million-level IOPS and microsecond low latency, enabling EB-level elastic expansion. With full-stack planning, one-stop delivery covers construction, full-time O&amp;M and lifecycle operation to ensure stable and compliant cluster operation.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">极速建设：</span>
+                        <span data-lang="en">Rapid Construction：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">依托全域供应链体系，方案定稿后最快1周完成算力设备及辅材齐套交付。百人级技术工程团队，可现场闭环处置90%以上硬件、系统层算力故障；精细化调优算力网络策略，保障链路零丢包、低时延、高同步无损传输。依托自研运维工具规模化自动化作业，集群部署效率提升5倍以上。专属30人+智算项目管理团队，以标准化全流程管控严控建设进度与施工质量，实现全域集群项目高标准交付、全程零延期。</span>
+                        <span data-lang="en">Leveraging the global supply chain system, we complete full delivery of computing equipment and auxiliary materials within one week after solution confirmation. Our hundred-person engineering team handles over 90% hardware and system faults on-site, optimizing network strategies for lossless, low-latency and high-synchronous transmission. Self-developed O&amp;M tools enable large-scale automated operations, boosting cluster deployment efficiency by over 5 times. A dedicated team of more than 30 professionals adopts standardized whole-process management to ensure high-standard delivery without delays.</span>
+                    </p>
+                </div>
+            </div>
+            <div class="case-item">
+                <img src="./images/58f4672d1850429e8bba646a82773ff8.png~tplv-a9rns2rl98-24_720_720.png" alt="集群调优与训推支持" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">集群调优与模型推理优化</span>
+                        <span data-lang="en">Cluster and Inference Optimization</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">集群调优：</span>
+                        <span data-lang="en">Cluster Tuning：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">具备服务器系统性能优化，RDMA高速网络深度优化、存储IO性能优化能力，同时精通集合通信算法优化（含AllReduce、AllGather等核心算法），可针对不同集群规模、业务场景实现定制化调优方案。调优后可实现跨节点通信时延压降40%-60%，有效解决大规模集群通信卡顿、数据传输延迟等问题；整机综合算力吞吐效能提升30%以上，大幅降低算力资源浪费，最大化释放集群原生算力价值，适配高并发、高算力需求的模型训练与推理场景，支撑大规模分布式任务高效运行。</span>
+                        <span data-lang="en">Skilled in server system tuning, RDMA high-speed network optimization and storage I/O optimization, proficient in collective communication algorithms including AllReduce and AllGather to deliver customized tuning solutions for diverse cluster scales and business scenarios. It reduces cross-node communication latency by 40%-60% to eliminate cluster stuttering and transmission delays, boosts overall server computing throughput by over 30%, cuts resource waste and maximizes cluster computing potential, perfectly adapting to high-concurrency model training and inference and supporting efficient large-scale distributed tasks.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">模型推理优化：</span>
+                        <span data-lang="en">Model Inference Optimization：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">具备全流程模型推理优化能力，涵盖模型压缩、量化优化、推理引擎优化、部署适配四大核心模块，兼顾推理速度与精度平衡。精通 TensorRT、ONNX Runtime 等主流引擎底层调优，通过算子融合、流水线并行精简计算链路；适配多硬件平台优化多线程、批量推理与服务调度，解决显存溢出、时延高、算力利用率低等痛点。经调优可实现推理速度提升 20%-60%、时延降幅超 50%、显存占用下降 30%-70%、算力利用率升至 30% 以上，全面适配实时交互、自动驾驶及大规模批量推理场景，为 AI 模型高效落地提供坚实支撑。</span>
+                        <span data-lang="en">Proficient in full-process model inference optimization covering model compression, quantization, engine tuning and deployment adaptation, with balanced speed and accuracy. Expert in low-level optimization of TensorRT, ONNX Runtime via operator fusion and pipeline parallelism; multi-hardware adaptive tuning on multithreading, batch inference and scheduling solves OOM, high latency and low utilization. It delivers 20%-60% faster inference, over 50% lower latency, 30%-70% less memory usage, and computing utilization above 30%, perfectly fitting real-time interaction, autonomous driving and large-scale batch inference to enable efficient AI deployment.</span>
+                    </p>
+                </div>
+            </div>
+            <div class="case-item">
+                <img src="./images/3c874a5cbe594d7bb51bb55b543051b1.png~tplv-a9rns2rl98-24_720_720.png" alt="全周期智能运维" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">全周期智能运维</span>
+                        <span data-lang="en">Full-lifecycle Intelligent Operation &amp; Maintenance</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">智维平台：</span>
+                        <span data-lang="en">Intelligent O&amp;M Platform：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">面向智算运维全流程业务，平台集成设备、监控、告警、日志、统计、巡检、调度、工单、资产、知识库十大核心功能；统一纳管服务器、网络、存储、数据库、容器云及机房动环全栈资源。具备实时监控、智能告警、日志分析、资产台账、自动化运维、流程工单、拓扑可视化、合规基线、自动巡检、运维报表等能力，赋能运维全岗位协同作业，支撑各条线业务高效运转。</span>
+                        <span data-lang="en">Covering the full workflow of intelligent computing O&amp;M, the platform integrates ten core modules including device management, monitoring, alerting, logging, inspection, scheduling, work orders, asset management and knowledge base. It centrally manages full-stack resources such as servers, networks, storage, databases, container clouds and IDC environment. Featuring real-time monitoring, intelligent alerting, log analysis, automated O&amp;M, topology visualization and compliance inspection, it enables cross-team O&amp;M collaboration and ensures efficient business operation.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">分级体系：</span>
+                        <span data-lang="en">Tiered System：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">7X24h万卡级数据中心运维能力，三级技术体系，从一线到二线再到专家，涵盖安全、RDMA网络、存储及各型智算，5分钟响应，重大问题2小时内闭环；与主流OEM厂深度合作，可快速解决全部复杂硬件故障；建立维保中⼼及在各算⼒节点配备本地备件仓，保障设备全年运⾏稳定率⾼达 99.9%。</span>
+                        <span data-lang="en">With 7×24-hour O&amp;M capabilities for ten-thousand-card-level data centers, we adopt a three-tier technical system covering frontline, second-line and expert teams, specializing in security, RDMA networks, storage and diverse intelligent computing scenarios. We deliver a 5-minute response and close major issues within 2 hours. In-depth cooperation with mainstream OEMs enables rapid resolution of all complex hardware faults. We have built a maintenance center and deployed local spare parts warehouses at each computing node, ensuring an annual equipment stability rate up to 99.9%.</span>
+                    </p>
+                </div>
+            </div>
+            <div class="case-item">
+                <img src="./images/32a3071d2ed74074bf58315ca886fe9b.png~tplv-a9rns2rl98-24_720_720.png" alt="全域算力运营" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">全域算力运营</span>
+                        <span data-lang="en">Global Computing Power Operation</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">智能调度：</span>
+                        <span data-lang="en">Intelligent Scheduling：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">平台支持多租户、多架构大模型及异构算力统一纳管智能编排，实现全域资产集中管控、毫秒级状态感知、3 分钟内弹性扩缩容。通过智能调度、负载均衡与任务优先级调配，算力分配效率提升 45%、复用率提升 40%；依托租户硬隔离、配额管控、98% 以上故障告警准确率，融合能耗管控、运维审计与可视化监控，适配智算中心模型批量部署与训推高效流转，兼顾安全合规与集约运营，保障各行业 AI 业务稳定运行、资源最优利用。</span>
+                        <span data-lang="en">The platform centrally orchestrates multi-tenancy, diverse LLMs and heterogeneous computing resources, supporting unified asset management, millisecond monitoring and rapid elastic scaling within 3 minutes. Intelligent scheduling raises computing efficiency by 45% and resource reuse by 40%. With tenant isolation, quota control, high-accuracy fault alerts and integrated energy and visualized O&amp;M management, it securely supports large-scale model training, inference and stable, cost-effective AI operations.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">绿色低碳：</span>
+                        <span data-lang="en">Green Computing, Low Carbon Operation：</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">可采用冷板式与浸没式液冷技术，结合机柜级液冷部署与全链路热管理优化，实现IT设备热量高效导出与散热效率提升。在系统与设备协同优化下，将智算集群PUE稳定控制在1.2以下，实现高性能算力与低能耗运行的统一。</span>
+                        <span data-lang="en">Adopting cold-plate and immersion liquid cooling technologies, combined with cabinet-level liquid cooling deployment and full-link thermal management optimization, it efficiently dissipates heat and boosts overall cooling efficiency. Through coordinated optimization of systems and devices, the PUE of intelligent computing clusters is steadily controlled below 1.2, uniting high-performance computing with low-energy, green and low-carbon operation.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 典型案例 -->
+<div id="case" class="page">
+    <section class="section" style="background:#f9f9f9;">
+        <div class="banner">
+            <img src="./images/f77d6468556742f68cc1478b4f39d44c.png~tplv-a9rns2rl98-24_720_720.png" alt="典型案例banner" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">以实战筑标杆，以算力拓疆土</span>
+                <span data-lang="en">Build Benchmarks with Practice, Expand with Computing</span>
+            </div>
+            <div class="sub-title">
+                <span data-lang="zh" class="show">以规模化部署、极速落地突破技术难关，用实战成果彰显专业交付硬实力</span>
+                <span data-lang="en">Break through technical barriers with large-scale &amp; rapid deployment, show strength with results</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="title">
+                <span data-lang="zh" class="show">全国布局地图</span>
+                <span data-lang="en">National Layout</span>
+            </div>
+            <p style="text-align:center; margin-bottom:40px;">
+                <span data-lang="zh" style="font-size:24px" class="show">9大核心区域：京津冀、长三角、粤港澳大湾区、成渝、内蒙古、贵州、甘肃、宁夏、新疆</span>
+                <span data-lang="en" style="font-size:24px">9 Core Regions: Beijing-Tianjin-Hebei, Yangtze Delta, Guangdong-Hong Kong-Macao, Chengdu-Chongqing, Inner Mongolia, Guizhou, Gansu, Ningxia, Xinjiang</span>
+            </p>
+            <img src="./images/b02b40074dcd42859f92be8b61ca9aab.png~tplv-a9rns2rl98-24_720_720.png" alt="布局地图" style="width:80%; margin-bottom:60px; display: block; margin-left: auto; margin-right: auto;" onerror="this.classList.add(&#39;error-img&#39;)"> 
+           <div class="case-item">
+                <img src="./images/8674c521523f4c98b5f54397ab42e6dc.png~tplv-a9rns2rl98-24_720_720.png" alt="西部大规模智算集群" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">西部地区 · 大规模智算集群</span>
+                        <span data-lang="en">Western Region · Large-Scale Cluster</span>
+                    </h3>
+                        <span data-lang="zh" class="show">规模：</span>
+                        <span data-lang="en">Scale: </span>
+                        <span class="highlight">
+                            <span data-lang="zh" class="show">超千台智算设备</span>
+                            <span data-lang="en">1000+ Nodes</span>
+                        </span>
+                    <p>
+                        <span data-lang="zh" class="show">建设周期：3个月</span>
+                        <span data-lang="en">Cycle: 3 Months</span>
+                    </p>
+                    <p>
+                         <span data-lang="zh" class="show">成果：</span>
+                        <span data-lang="en">Results: </span>
+                        <span class="highlight">
+                            <span data-lang="zh" class="show">系统故障率下降约60%+、训练效率提升20%–35%、网络稳定性提升约30%</span>
+                            <span data-lang="en">Failure rate -60%, Training efficiency +20-35%, Network stability +30%</span>
+                        </span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">核心挑战：多层级大规模组网规划，链路规模庞大、连接关系复杂，整体拓扑设计难度高，难以保障规划与实际部署的一致性。多类网络融合架构下适配逻辑复杂，软硬件兼容与参数优化难度大；系统稳定性保障与故障定位复杂，难以实现统一调优与高效运维。</span>
+                        <span data-lang="en">Core Challenges: Multi-level large-scale networking brings complex topology &amp; difficult deployment alignment. Multi-network integration causes complex adaptation, compatibility issues and hard tuning. System stability, fault location and O&amp;M efficiency are also challenging.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">解决方案：统一底层调度与流控策略，开展固件与驱动适配认证；对网络划分独立 VLAN 与网段，实现业务流量隔离与有序传输；优化 PCIe 通道分配，减少资源争用；标准化 MTU 参数配置，完善故障熔断与自愈机制，提升系统稳定性与运维效率。</span>
+                        <span data-lang="en">Solutions: Unify scheduling and flow control, certify firmware/drivers, isolate traffic via VLANs, optimize PCIe and MTU settings, and enhance fault self-healing to improve stability and O&amp;M efficiency.</span>
+                    </p>
+                </div>
+            </div>
+            <div class="case-item">
+                <img src="./images/621a26574593468cacc15619602f4aca.jpeg~tplv-a9rns2rl98-24_720_720.jpeg" alt="东部高密度智算集群" onerror="this.classList.add(&#39;error-img&#39;)">
+                <div class="case-text">
+                    <h3>
+                        <span data-lang="zh" class="show">东部地区 · 高密度小规模高性能算力集群</span>
+                        <span data-lang="en">Eastern Region · High-Density Small Cluster</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">建设周期：</span>
+                        <span data-lang="en">Cycle: </span>
+                        <span class="highlight">23天</span>
+                    </p>
+                    <p></p>                    
+                    <p>
+                         <span data-lang="zh" class="show">成果：</span>
+                        <span data-lang="en">Results: </span>
+                        <span class="highlight">
+                            <span data-lang="zh" class="show">实现异常检测时长压缩至5秒级，故障自愈恢复时间缩短至10秒以内，端到端数据传输时延降低约40%–60%</span>
+                            <span data-lang="en">AAchieve 5s anomaly detection, 10s fault self-healing, and 40%–60% lower end-to-end latency</span>
+                        </span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">核心挑战：组网涉及参数、存储、业务、带内与带外五大平面，需分别构建并实现权限隔离与联动协同，整体拓扑设计、链路规划与逐节点配置复杂度高。系统对并发与时延要求远高于常规IDC，需支持微秒级端到端数据包时延，并在数秒内完成恢复或告警响应。</span>
+                        <span data-lang="en">Core Challenges: CNetworking covers five planes requiring isolation and collaboration, causing high complexity in topology, planning and configuration. The system needs ultra-high concurrency, microsecond latency and second-level fault response.</span>
+                    </p>
+                    <p>
+                        <span data-lang="zh" class="show">解决方案：统一混合组网调度策略，实施流量分层、带宽切分与优先级控制，保障存储与业务隔离传输，优化低时延转发路径与拥塞控制机制。接入自研监控平台，增强PFC Storm快速检测与自动抑制能力，实现秒级告警与快速恢复。</span>
+                        <span data-lang="en">Solutions: Unify hybrid network scheduling with traffic prioritization and bandwidth allocation to isolate storage/services. Optimize low-latency forwarding and congestion control. Integrate in-house monitoring for fast PFC Storm detection and suppression, enabling second-level alerts and recovery.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 关于我们 -->
+<div id="about" class="page">
+    <section class="section">
+        <div class="banner">
+            <img src="./images/4df5c953505f44a0b9f9ff2745c3c37b.png~tplv-a9rns2rl98-24_720_720.png" alt="关于我们banner" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">以初心立行，以专业致远</span>
+                <span data-lang="en">Act with Original Intention, Achieve with Professionalism</span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="title">
+                <span data-lang="zh" class="show">使命</span>
+                <span data-lang="en">Mission</span>
+            </div>
+            <p style="text-align:center; font-size:24px; margin-bottom:40px;">
+                <span data-lang="zh" class="show">构建全球领先算力底座，赋能AI持续进化</span>
+                <span data-lang="en">Build world-leading computing infrastructure, empower AI evolution</span>
+            </p>
+            <div class="title">
+                <span data-lang="zh" class="show">愿景</span>
+                <span data-lang="en">Vision</span>
+            </div>
+            <p style="text-align:center; font-size:24px; margin-bottom:40px;">
+                <span data-lang="zh" class="show">让算力成为普惠高效的基础能力，持续释放AI创新潜能</span>
+                <span data-lang="en">Make computing inclusive &amp; efficient, unlock AI innovation potential</span>
+            </p>
+            <div class="title">
+                <span data-lang="zh" class="show">价值观</span>
+                <span data-lang="en">Values</span>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>
+                        <span data-lang="zh" style="font-size:24px" class="show">务实</span>
+                        <span data-lang="en" style="font-size:24px">Pragmatic</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">聚焦真实需求与落地效果</span>
+                        <span data-lang="en">Focus on real needs &amp; results</span>
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>
+                        <span data-lang="zh" style="font-size:24px" class="show">极致</span>
+                        <span data-lang="en" style="font-size:24px">Extreme</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">追求算力性能与服务质量极限</span>
+                        <span data-lang="en">Pursue performance &amp; service quality</span>
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>
+                        <span data-lang="zh" style="font-size:24px" class="show">共赢</span>
+                        <span data-lang="en" style="font-size:24px">Win-Win</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">构建产业协同生态</span>
+                        <span data-lang="en">Build industrial synergy ecosystem</span>
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>
+                        <span data-lang="zh" style="font-size:24px" class="show">创新</span>
+                        <span data-lang="en" style="font-size:24px">Innovation</span>
+                    </h3>
+                    <p>
+                        <span data-lang="zh" class="show">持续突破技术边界</span>
+                        <span data-lang="en">Continuously break technical boundaries</span>
+                    </p>
+                </div>
+            </div>
+            <div class="title">
+                <span data-lang="zh" class="show">我们的团队</span>
+                <span data-lang="en">Our Team</span>
+            </div>
+            <p style="text-align:center; line-height:1.8; margin:30px 0;">
+                <span data-lang="zh" style="font-size:24px" class="show">核心团队来自顶尖高校及头部互联网企业，深耕人工智能、云计算领域。</span>
+                <span data-lang="en">Core team from top universities &amp; Internet enterprises, focused on AI &amp; cloud computing.</span>
+            </p>
+            <div class="data-box">
+                <div>
+                    <span data-lang="zh" class="show">技术专家</span>
+                    <span data-lang="en">Tech Experts</span>
+                    <span>20</span>+
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">专业采购</span>
+                    <span data-lang="en">Procurement</span>
+                    <span>10</span>+
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">工程师团队</span>
+                    <span data-lang="en">Engineers</span>
+                    <span>100</span>+
+                </div>
+                <div>
+                    <span data-lang="zh" class="show">工程团队</span>
+                    <span data-lang="en">Construction</span>
+                    <span>300</span>+
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 广纳贤才 -->
+<div id="job" class="page">
+    <section class="section">
+        <div class="banner">
+            <!-- 广招贤士背景图 -->
+            <img src="./images/750b40e356994382b809e3e251990bc9.png~tplv-a9rns2rl98-image.png" alt="高斯智算-深耕智算基础设施" onerror="this.classList.add(&#39;error-img&#39;)">
+            <div class="slogan">
+                <span data-lang="zh" class="show">招贤纳士</span>
+                <span data-lang="en">Join Us</span>
+            </div>
+        </div>
+        <div class="footer-job">
+            <h2 style="font-size:48px; margin-bottom:30px;">
+                <span data-lang="zh" class="show">加入我们</span>
+                <span data-lang="en">Join Us</span>
+            </h2>
+            <p style="font-size:24px; margin-bottom:60px;">
+                <span data-lang="zh" class="show">我们坚信人才是驱动算力建设与智能计算革新的核心力量</span>
+                <span data-lang="en">We firmly believe that talent is the core driving force behind the construction of computing power and the innovation of intelligent computing</span>
+            </p>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">查看社会招聘</span>
+                <span data-lang="en">Recruitment</span>
+            </a>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">查看核心岗位</span>
+                <span data-lang="en">Key Positions</span>
+            </a>
+            <a href="file:///Users/JL/Documents/%E9%A1%B9%E7%9B%AE/GS%E7%BD%91%E7%AB%99/demo3.html#" class="job-btn">
+                <span data-lang="zh" class="show">提交简历</span>
+                <span data-lang="en">Submit Resume</span>
+            </a>
+            <div style="margin-top:40px;">
+                <p>
+                    <span data-lang="zh" class="show">简历投递邮箱：</span>
+                    <span data-lang="en">Email: </span>
+                    <strong>hr@gausspro.cn</strong>
+                </p>
+                <p style="margin-top:10px;">
+                    <span data-lang="zh" class="show">简历如果合适会在5个工作日内进行反馈，感谢投递！</span>
+                    <span data-lang="en">We will reply within 5 working days if qualified, thanks!</span>
+                </p>
+            </div>
+            <div style="margin-top:40px; text-align:left; max-width:800px; margin-left:auto; margin-right:auto;">
+                <h3 style="margin-bottom:20px;">
+                    <span data-lang="zh" class="show">关怀与成长</span>
+                    <span data-lang="en">Benefits &amp; Growth</span>
+                </h3>
+                <p>
+                    <span data-lang="zh" class="show">• 与顶尖算力团队并肩作战</span>
+                    <span data-lang="en">• Work with top computing team</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 清晰的晋升成长路径</span>
+                    <span data-lang="en">• Clear promotion path</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 弹性工作制 + 结果导向</span>
+                    <span data-lang="en">• Flexible working + result-oriented</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 有竞争力的薪酬+奖金</span>
+                    <span data-lang="en">• Competitive salary + bonus</span>
+                </p>
+                <p>
+                    <span data-lang="zh" class="show">• 全额五险一金 + 商业保险 + 高端体检等</span>
+                    <span data-lang="en">• Full social insurance + commercial insurance + physical examination</span>
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    // 默认中文
+    let currentLang = 'zh';
+
+    // 页面切换
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+        document.getElementById(pageId).classList.add('active')
+        document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'))
+        document.querySelector(`.nav a[onclick="showPage('${pageId}')"]`).classList.add('active')
+    }
+
+    // 语言切换
+    function switchLang(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            el.classList.remove('show');
+            if (el.getAttribute('data-lang') === lang) el.classList.add('show');
+        });
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.lang-btn[onclick="switchLang('${lang}')"]`).classList.add('active');
+    }
+
+    // 数字动画
+    function animateNumber(el, target) {
+        let current = 0;
+        let step = target / 50;
+        let timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target; clearInterval(timer);
+            }
+            el.innerText = Math.floor(current);
+        }, 30);
+    }
+
+    // 初始化
+    window.onload = function () {
+        switchLang('zh');
+        document.querySelectorAll('.data-box span').forEach(item => {
+            if (!isNaN(parseInt(item.innerText))) animateNumber(item, parseInt(item.innerText));
+        });
+    }
+</script>
+
+</body></html>
